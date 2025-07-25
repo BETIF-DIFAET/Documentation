@@ -32,6 +32,7 @@ templates_path = ['_templates']
 
 #html_theme = 'sphinx_rtd_theme'
 html_theme = 'furo'
+html_logo = "logo-ET-bologna.png"
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
