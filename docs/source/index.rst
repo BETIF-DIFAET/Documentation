@@ -22,6 +22,7 @@ Contents
 --------
 
 .. toctree::
-
+   user_guide
+   admin_guide
    usage
    api
