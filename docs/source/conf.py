@@ -2,9 +2,9 @@
 
 # -- Project information
 
-project = 'Lumache'
-copyright = '2021, Graziella'
-author = 'Graziella'
+project = 'BETIF/DIFAET Documentation'
+copyright = '2025, BETIF/DIFAET Organization'
+author = 'Tommaso Diotalevi, Marco Lorusso'
 
 release = '0.1'
 version = '0.1.0'
