@@ -17,7 +17,6 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
-    'sphinx.ext.numfig',
 ]
 
 intersphinx_mapping = {
@@ -35,3 +34,5 @@ html_theme = 'furo'
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
+
+numfig = True

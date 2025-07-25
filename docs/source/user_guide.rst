@@ -17,5 +17,5 @@ and use the BETIF server as SOCKS proxy (the instructions on how to do this depe
 .. figure:: jhub.png
 
 
-Once done, it is possible to access the dashboard connecting to `betif.jhub <betif.jhub>`_ entrypoint, as shown in Figure :ref:`jhub` .
+Once done, it is possible to access the dashboard connecting to `betif.jhub <betif.jhub>`_ entrypoint, as shown in Figure :numref:`jhub` .
 Clicking on *Sign in with OAuth2.0*, will redirect to the **IAM Einstein Telescope** login. If the user is authorized to use the platform (possible only with a specific group name assigned by an admin), it will finally redirect to the JupyterLab image selection page. The default image visible on the page is a base working image with only Python3.11 installed.
