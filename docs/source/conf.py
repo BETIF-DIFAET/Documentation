@@ -2,7 +2,7 @@
 
 # -- Project information
 
-project = 'BETIF/DIFAET Documentation'
+project = 'BETIF/DIFAET'
 copyright = '2025, BETIF/DIFAET Organization'
 author = 'Tommaso Diotalevi, Marco Lorusso'
 
