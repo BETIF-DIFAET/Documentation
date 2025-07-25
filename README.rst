@@ -1,13 +1,9 @@
-Template for the Read the Docs tutorial
+BETIF-DIFAET documentation
 =======================================
 
-This GitHub template includes fictional Python library
-with some basic Sphinx docs.
+Based on the ReadTheDocs tutorial `repository`_
 
-Read the tutorial here:
-
-https://docs.readthedocs.io/en/stable/tutorial/
-
+.. _repository: https://github.com/readthedocs/tutorial-template
 
 Documentation website:
 https://betif-difaet.readthedocs.io
