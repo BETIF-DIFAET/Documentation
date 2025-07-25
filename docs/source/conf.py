@@ -3,7 +3,7 @@
 # -- Project information
 
 project = 'BETIF/DIFAET'
-copyright = '2025, BETIF/DIFAET Organization'
+copyright = '%Y, BETIF/DIFAET Organization'
 author = 'Tommaso Diotalevi, Marco Lorusso'
 
 release = '0.1'

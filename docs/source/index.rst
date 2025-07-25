@@ -1,5 +1,5 @@
 Welcome to BETIF/DIFAET Computing Infrastructure  documentation!
-===============================================================
+================================================================
 
 The **BETIF/DIFAET Collaboration** is a joint effort between the Italian National Institute for Nuclear Physics (**INFN**) and the Physics Department (**DIFA**) of the University of Bologna, with the objective of creating a computing infrastructure and analysis platform for the Einstein Telescope (ET) community. 
 
@@ -24,5 +24,3 @@ Contents
 .. toctree::
    user_guide
    admin_guide
-   usage
-   api
