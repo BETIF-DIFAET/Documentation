@@ -1,6 +1,10 @@
 User Guide
 ===========
 
+
+How to access the prototype platform
+------------------------------------
+
 In order to access the Jupyterhub instance now, an user would need to connect via ssh to the BETIF machine and bind a port through the ``-D``  flag:
 
 .. code-block:: bash

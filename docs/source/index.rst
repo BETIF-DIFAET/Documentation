@@ -24,3 +24,5 @@ Contents
 .. toctree::
    user_guide
    admin_guide
+   open_issues
+   hard_desc
