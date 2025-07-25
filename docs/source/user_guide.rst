@@ -12,6 +12,8 @@ and use the BETIF server as SOCKS proxy (the instructions on how to do this depe
 * **Firefox**: *Settings* -> *Network settings* -> select *Manual proxy configuration* and type ``localhost`` on **Host SOCKS** with ``9999`` port;
 * **Safari** and **Chrome** (on MacOS): Go to *SystemPreferences* -> *Network* -> *Wi-Fi* -> Click on *Details* next to the connected Wi-Fi -> *proxy* -> enable **SOCKS proxy** -> put the same information written above.
 
+.. _jhub:
+
 .. figure:: jhub.png
    :name: jhub
 
