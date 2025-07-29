@@ -3,6 +3,9 @@ Administrator Guide
 ===================
 
 This section provides guidance for administrators managing the BETIF/DIFAET system. It covers installation, configuration, and maintenance tasks to ensure the system runs smoothly.
+The scripts shown below are also available in the `helper-scripts repository`_.
+
+.. _helper-scripts repository: https://github.com/BETIF-DIFAET/helper-scripts
 
 -----------------------------------------------
 Kernel-based Virtual Machine (KVM) Installation
@@ -179,10 +182,87 @@ Using RKE2, the computing architecture shown in :numref:`betif-arch` was built:
 Deploying the BETIF-DIFAET platform
 -----------------------------------
 
-IN PROGRESS
+Once the Kubernetes cluster is set up with RKE2, on the master node the kube-config file is available at ``/home/clouduser/rke2.yaml``. This file can be used to interact with 
+the Kubernetes cluster using `kubectl`, the command-line tool for Kubernetes.
+
+.. DANGER::
+    
+  The kube-config file contains sensitive information, such as the token used to authenticate with the cluster. **It should be kept secure and not shared publicly.**
+
+.. IMPORTANT::
+  
+  Currently, the BETIF-DIFAET platform does not have a DNS resolved domain name. Therefore, the IP address of the master node is used to access the platform. To create an user-friendly
+  domain name, add the following line to the ``/etc/hosts`` file: 
+
+  .. code-block:: bash
+
+    123.456.789.012 betif-difaet.jhub
+
+  where ``123.456.789.012`` is the IP address of the master node.
+
+The BETIF-DIFAET platform is deployed using Helm charts [HELM]_, which are packages of pre-configured Kubernetes resources. The recipe for deploying the platform is available in the 
+`charts repository`_.
+
+.. _charts repository: https://github.com/BETIF-DIFAET/charts
+
+The steps to deploy the platform are as follows:
+
+1. **Install Helm**: Ensure that Helm is installed on the same machine where you connect and control the Kubernetes cluster. An example of how to install Helm is shown `here`_.
+
+.. _here: https://github.com/BETIF-DIFAET/helper-scripts/blob/main/helm/install_helm.sh
+
+2. Add the following requirements:
+
+* Cert-Manager:
+
+    .. code-block:: bash
+
+      kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml
+      kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.crds.yaml
+
+* Local-Path storage class:
+
+    .. code-block:: bash
+
+      kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.24/deploy/local-path-storage.yaml
+
+3. **Deploy the BETIF-DIFAET platform**: Use the Helm chart to deploy the platform.
+
+    .. code-block:: bash
+
+      git clone git@github.com:BETIF-DIFAET/charts.git
+      cd charts/stable/jhubaas
+      helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
+      helm dependency build
+      kubectl create namespace jhub
+      helm upgrade --install --cleanup-on-fail --namespace jhub jhub ./ 
+    
+The last command deploys the JupyterHub platform in the `jhub` namespace of the Kubernetes cluster. The deployment will take a few minutes to complete, 
+and you can monitor the status of the pods using:
+
+.. code-block:: bash
+
+    kubectl get pods -n jhub
+
+Once the deployment is complete, you can access the JupyterHub platform using the IP address of the master node. If you have set up a domain name in your ``/etc/hosts`` file, 
+you can access it using that domain name as well (in this case `betif-difaet.jhub`).
+
+^^^^^^^^^^^^^^^^^^^^
+Customizing the jhub
+^^^^^^^^^^^^^^^^^^^^
+
+To customize the JupyterHub configuration, you can modify the ``values.yaml`` file in the Helm chart directory. This file contains various configuration options for JupyterHub,
+including authentication methods (currently the Einstein Telescope IAM instance), resource limits, and more.
+
+Once you have made your changes to the ``values.yaml`` file, you can apply them by running:
+
+.. code-block:: bash
+
+    helm upgrade --install --cleanup-on-fail --namespace jhub jhub ./ 
 
 ----------
 References
 ----------
 
 .. [RKE2] https://docs.rke2.io/
+.. [HELM] https://helm.sh/
