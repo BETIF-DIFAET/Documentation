@@ -203,3 +203,29 @@ to confirm.
 
 3. **Browse datasets**: Use the Rucio lab extension to browse datasets, containers, and files. You can also include datasets in your 
    JupyterLab notebooks by clicking on the dataset and selecting the option to include it in your notebook.
+
+.. NOTE::
+
+   While not strictly necessary, Rucio is also available as a **command line interface (CLI)** tool. This is independent of the lab extension
+   and can be used to interact with Rucio from the terminal. To use the CLI, you need to create a configuration file named ``rucio.cfg``, with
+   the following content:
+
+   .. code-block:: ini
+
+      [client]
+      rucio_host = https://vre-rucio.cern.ch
+      auth_host = https://vre-rucio-auth.cern.ch
+      ca_cert = /cvmfs/grid.cern.ch/etc/grid-security/certificates/
+      account = <YOUR_RUCIO_ACCOUNT>
+      auth_type = x509_proxy
+      client_x509_proxy = /tmp/x509up_u0 
+
+   Replace ``<YOUR_RUCIO_ACCOUNT>`` with your Rucio account name. The ``rucio_host`` and ``auth_host`` URLs are different for each Virtual Organization,
+   so make sure to check the Rucio documentation for your specific VO (in the example above, the ``escape`` VO is used).
+   Finally, create the environment variable ``$RUCIO_CONFIG`` pointing to the configuration file:
+
+   .. code-block:: bash
+
+      $ export RUCIO_CONFIG=/path/to/rucio.cfg
+
+   Now, typing ``rucio whoami`` in the terminal will show your Rucio account information, confirming that the CLI is correctly configured.
