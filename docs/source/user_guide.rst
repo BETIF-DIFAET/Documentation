@@ -5,6 +5,9 @@ User Guide
 How to access the prototype platform
 ------------------------------------
 
+.. IMPORTANT::
+   To connect via ssh to the BETIF-DIFAET machine, you need to stay within the **INFN Bologna network** (either physically or through a VPN connection).
+
 In order to access the Jupyterhub instance now, an user would need to connect via ssh to the BETIF-DIFAET machine and bind a port through the ``-D``  flag:
 
 .. code-block:: bash
