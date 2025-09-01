@@ -9,7 +9,7 @@ Processor Configuration
 -----------------------
 
 
-* **CPUs** 2 × Intel\textsuperscript{\textregistered} Xeon\textsuperscript{\textregistered} Platinum 8462Y+ (Sapphire Rapids)
+* **CPUs** 2 × Intel\ :sup:`®` Xeon\ :sup:`®` Platinum 8462Y+ (Sapphire Rapids)
 * **Total Cores/Threads** 64 cores / 128 threads
 * **Base Frequency** 2.80 GHz
 * **Max Turbo Frequency** 4.10 GHz
