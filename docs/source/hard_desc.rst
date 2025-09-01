@@ -55,7 +55,7 @@ Networking
 Storage
 -------
 
-* **Drives** 2 × Intel D7-P5520 NVMe SSDs
+* **Drives** 4 × Intel D7-P5520 NVMe SSDs
 * **Capacity** 15.36 TB each
 * **Interface** PCIe 4.0 x4 NVMe
 * **Performance**
