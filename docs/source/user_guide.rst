@@ -53,16 +53,25 @@ JupyterLab image selection
 
 The default base images visible on the ``Server Options`` page are:
 
-+-----------------------------+-------------------------------------------------------+-------------------------------------------------------+
-|         Image name          |                     Image path                        |                 Packages installed                    |
-+=============================+=======================================================+=======================================================+
-|    Almalinux9 base image    |    `ghcr.io/betif-difaet/jlab:betif-alma9-v0.0.6`_    |              Python 3.11, VOMS client                 |
-+-----------------------------+-------------------------------------------------------+-------------------------------------------------------+
-| Almalinux9 Rucio base image | `ghcr.io/betif-difaet/jlab:betif-alma9-rucio-v0.0.6`_ | Python 3.11, VOMS client, Rucio lab extension and CLI |
-+-----------------------------+-------------------------------------------------------+-------------------------------------------------------+
++--------------------------------------+-----------------------------------------------------------+-------------------------------------------------------+
+|              Image name              |                       Image path                          |                 Packages installed                    |
++======================================+===========================================================+=======================================================+
+|    Almalinux9 CPU-only base image    |    `ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v0.1.0`_    |              Python 3.11, VOMS client                 |
++--------------------------------------+-----------------------------------------------------------+-------------------------------------------------------+
+|  Almalinux9 CPU-with-GPU base image  |    `ghcr.io/betif-difaet/jlab:betif-alma9-gpu-v0.1.0`_    | Python 3.11, VOMS client, NVIDIA drivers, CUDA 12.4   |
++--------------------------------------+-----------------------------------------------------------+-------------------------------------------------------+
 
-.. _ghcr.io/betif-difaet/jlab:betif-alma9-v0.0.6: https://github.com/betif-difaet/custom_images/pkgs/container/jlab/482306514?tag=betif-alma9-v0.0.6
-.. _ghcr.io/betif-difaet/jlab:betif-alma9-rucio-v0.0.6: https://github.com/betif-difaet/custom_images/pkgs/container/jlab/482306928?tag=betif-alma9-rucio-v0.0.6
+.. _ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v0.1.0: https://github.com/betif-difaet/custom_images/pkgs/container/jlab/506490177?tag=betif-alma9-cpu-v0.1.0
+.. _ghcr.io/betif-difaet/jlab:betif-alma9-gpu-v0.1.0: https://github.com/betif-difaet/custom_images/pkgs/container/jlab/506497746?tag=betif-alma9-gpu-v0.1.0
+
+.. WARNING::
+
+   Make sure to select the image that best fits your needs. 
+   
+   For example, if you **do not need GPU capabilities**, it is better to select the CPU-only image.
+
+   On the other hand, if **you need GPU capabilities**, make sure to select **Yes** in the JupyterHub spawn form, as shown in :numref:`jlab-spawn`, and select the CPU-with-GPU image. 
+   Otherwise, the GPU resources will not be allocated to your notebook server and/or the NVIDIA drivers will not be available.
 
 
 Create your own JupyterLab image
@@ -81,7 +90,7 @@ As an example:
 
 .. code-block:: dockerfile
 
-   FROM ghcr.io/betif-difaet/jlab:betif-alma9-rucio-v0.0.6
+   FROM ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v0.1.0
    RUN python3 -m pip install keras
 
 - To make the image visible on the platform, there are several options available:
