@@ -80,8 +80,7 @@ the ``virt-install`` interface.
 
     qemu-img create -f qcow2 -b "$vm_base_disk" -F qcow2 "$vm_disk" 80G
 
-    virt-install \
-        --connect qemu:///system \
+    virt-install \        --connect qemu:///system \
         --name "$vm_name" \
         --memory "$vm_memory" \
         --machine q35 \
@@ -112,6 +111,79 @@ worker nodes. In the actual deployment this network will block access to the wor
         </dhcp>
       </ip>
     </network>
+
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+Turn on GPU Virtualization
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Up until now, the creation of VMs has relied on virtualization technologies (e.g., VT-x for Intel CPUs), which do not expose hardware connected to the host machine via a PCIe interface.  
+To enable the passthrough of PCIe expansion devices, such as GPUs or FPGA accelerator cards, ``VT-d`` (Intel) or ``AMD-V`` (AMD) must be activated in the BIOS setup menu.
+
+Once enabled in the firmware, the procedure continues in the host operating system: PCIe passthrough must also be allowed in the kernel.
+
+Run:
+
+.. code-block:: bash
+
+   find /sys/kernel/iommu_groups/ -type l
+
+If no output is returned, the kernel boot options must be updated.
+
+On AlmaLinux 9, with an Intel CPU and chipset, this can be done with:
+
+.. code-block:: bash
+
+   grubby --update-kernel=ALL --args="intel_iommu=on iommu=pt"
+
+After a reboot, the ``iommu_groups`` folder should be populated with all devices that can be passed through to VMs.
+
+To use a device inside a VM, it must not be in use by the host system, i.e., the default driver must not be loaded.  
+For example, with two identical GPUs, a rule must be added at boot time in ``/etc/udev/rules.d/99-vfio.rules``:
+
+.. code-block::
+
+   ACTION=="add", SUBSYSTEM=="pci", KERNEL=="0000:<PCI-ID of device>", DRIVER=="", ATTR{driver_override}="vfio-pci"
+
+The ``PCI-ID`` can be retrieved using ``lspci``.
+
+Next, load the ``vfio-pci`` driver, which is responsible for virtualization handling:
+
+.. code-block:: bash
+
+   modprobe vfio-pci
+
+.. IMPORTANT::
+
+   Due to issues with the order in which rules are applied during boot, ``vfio-pci`` is not yet loaded automatically.  
+   This command must therefore be run manually after every reboot. The driver will automatically attach to the configured hardware.
+
+Finally, update the operating system configuration (``initramfs``) with:
+
+.. code-block:: bash
+
+   dracut -f
+
+At this point, a VM with access to a GPU can be create with the following instruction:
+
+.. code-block:: bash
+
+ virt-install \
+    --connect qemu:///system \
+    --name "$vm_name" \
+    --memory "$vm_memory" \
+    --machine q35 \
+    --vcpus "$vm_cpus" \
+    --cpu host-passthrough \
+    --import \
+    --cloud-init user-data="$ci_user_data" \
+    --osinfo name=almalinux9 \
+    --disk "$vm_disk" \
+    --virt-type kvm \
+    --network network=private-net \
+    --network network=default \
+    --noautoconsole \
+    --hostdev <PCI-ID of device>
 
 --------------------------------
 Turning the VMs in a K8s cluster
