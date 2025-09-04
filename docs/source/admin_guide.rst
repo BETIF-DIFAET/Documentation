@@ -272,7 +272,7 @@ Then the Nvidia Toolkit and driver have to be installed, following the instructi
 
     dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
     dnf clean all
-    dnf install cuda-toolkit-13-0
+    dnf install cuda-toolkit-12-4
     dnf module install nvidia-driver:latest-dkms
     reboot
 
