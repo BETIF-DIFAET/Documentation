@@ -250,6 +250,48 @@ Using RKE2, the computing architecture shown in :numref:`betif-arch` was built:
 
    Schematic of the BETIF-DIFAET architecture.
 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Setting up the GPU Worker Node
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To make the GPU deployable in the k8s cluster, NVidia's drivers are needed in the worker node housing the virtual GPU.
+
+After an update of the kernel, some utilities are useful/needed to move forward
+
+.. code-block:: bash
+
+    dnf check-update --security
+    dnf upgrade --security
+    dnf install pciutils
+    dnf install epel-release
+    dnf install dkms gcc
+
+Then the Nvidia Toolkit and driver have to be installed, following the instruction from [GPU1]_:
+
+.. code-block:: bash
+
+dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
+dnf clean all
+dnf install cuda-toolkit-13-0
+dnf module install nvidia-driver:latest-dkms
+reboot
+
+Once the node is running after the reboot, it is possible to check if the driver is working by running ``nvidia-smi``
+
+.. IMPORTANT::
+  
+  It is possible that the open-source driver ``nouveau`` is used instead of the proprietary one from Nvidia, if that is the case it can be fixed with the following
+
+  .. code-block:: bash
+
+    sudo tee /etc/modprobe.d/blacklist-nouveau.conf <<EOF
+    blacklist nouveau
+    options nouveau modeset=0
+    EOF
+    dracut --force
+    reboot
+
+
 -----------------------------------
 Deploying the BETIF-DIFAET platform
 -----------------------------------
@@ -338,3 +380,7 @@ References
 
 .. [RKE2] https://docs.rke2.io/
 .. [HELM] https://helm.sh/
+.. [GPU1] https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&Distribution=RHEL&target_version=9&target_type=rpm_network
+.. [GPU2] https://docs.rke2.io/advanced
+
+
