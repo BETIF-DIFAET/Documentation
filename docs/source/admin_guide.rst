@@ -270,11 +270,11 @@ Then the Nvidia Toolkit and driver have to be installed, following the instructi
 
 .. code-block:: bash
 
-dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
-dnf clean all
-dnf install cuda-toolkit-13-0
-dnf module install nvidia-driver:latest-dkms
-reboot
+    dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
+    dnf clean all
+    dnf install cuda-toolkit-13-0
+    dnf module install nvidia-driver:latest-dkms
+    reboot
 
 Once the node is running after the reboot, it is possible to check if the driver is working by running ``nvidia-smi``
 
