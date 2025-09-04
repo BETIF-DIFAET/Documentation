@@ -274,7 +274,14 @@ Then the Nvidia Toolkit and driver have to be installed, following the instructi
     dnf clean all
     dnf install cuda-toolkit-12-4
     dnf module install nvidia-driver:latest-dkms
+
+In order to actually add the nvidia driver to the kernel run ``dkms status`` and then
+
+.. code-block:: bash
+
+    dkms install nvidia/<version>
     reboot
+
 
 Once the node is running after the reboot, it is possible to check if the driver is working by running ``nvidia-smi``
 
