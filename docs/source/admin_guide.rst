@@ -327,9 +327,9 @@ Using RKE2, the computing architecture shown in :numref:`betif-arch` was built:
 
    Schematic of the BETIF-DIFAET architecture.
 
------------------------------------
-Deploying the BETIF-DIFAET platform
------------------------------------
+----------------------------------------
+Deploying the BETIF-DIFAET jhub platform
+----------------------------------------
 
 Once the Kubernetes cluster is set up with RKE2, on the master node the kube-config file is available at ``/home/clouduser/rke2.yaml``. This file can be used to interact with 
 the Kubernetes cluster using `kubectl`, the command-line tool for Kubernetes.
@@ -364,34 +364,50 @@ The steps to deploy the platform are as follows:
 
 * Cert-Manager:
 
-    .. code-block:: bash
+  .. code-block:: bash
 
-      kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml
-      kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.crds.yaml
+    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml
+    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.crds.yaml
 
-* Local-Path storage class:
+* Label nodes with no GPU, to perform node selection during the deployment of the JupyterHub platform:
 
-    .. code-block:: bash
+  .. code-block:: bash
 
-      kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.24/deploy/local-path-storage.yaml
+    kubectl label node worker-N nvidia.com/gpu.present=false
 
-3. **Deploy the BETIF-DIFAET platform**: Use the Helm chart to deploy the platform.
+  This is not needed for the node with the GPU, which will be automatically detected by the NVIDIA device plugin (see later).
 
-    .. code-block:: bash
+3. NFS external provisioner:
 
-      git clone git@github.com:BETIF-DIFAET/charts.git
-      cd charts/stable/jhubaas
-      helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
-      helm dependency build
-      kubectl create namespace jhub
-      helm upgrade --install --cleanup-on-fail --namespace jhub jhub ./ 
-    
+.. code-block:: bash
+
+  helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+  helm repo update
+  kubectl create namespace kube-storage
+  helm install nfs-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
+    --namespace kube-storage \
+    --set nfs.server=<NFS_SERVER_IP> \
+    --set nfs.path=/srv/nfs/k8s
+
+where ``<NFS_SERVER_IP>`` is the IP address of the NFS VM created earlier.
+
+4. **Deploy the BETIF-DIFAET platform**: Use the Helm chart to deploy the platform.
+
+.. code-block:: bash
+
+  git clone git@github.com:BETIF-DIFAET/charts.git
+  cd charts/stable/jhubaas
+  helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
+  helm dependency build
+  kubectl create namespace jhub
+  helm upgrade --install --cleanup-on-fail --namespace jhub jhub ./ 
+  
 The last command deploys the JupyterHub platform in the `jhub` namespace of the Kubernetes cluster. The deployment will take a few minutes to complete, 
 and you can monitor the status of the pods using:
 
 .. code-block:: bash
 
-    kubectl get pods -n jhub
+  kubectl get pods -n jhub
 
 Once the deployment is complete, you can access the JupyterHub platform using the IP address of the master node. If you have set up a domain name in your ``/etc/hosts`` file, 
 you can access it using that domain name as well (in this case `betif-difaet.jhub`).
@@ -408,6 +424,99 @@ Once you have made your changes to the ``values.yaml`` file, you can apply them 
 .. code-block:: bash
 
     helm upgrade --install --cleanup-on-fail --namespace jhub jhub ./ 
+
+---------------------------
+Adding CVMFS to the cluster
+---------------------------
+
+To add CVMFS support to the Kubernetes cluster, a dedicated Helm chart is available in the `charts repository`_.
+
+.. _charts repository: https://github.com/BETIF-DIFAET/charts
+
+The installation can be done by following these steps:
+
+1. Clone the charts repository (if not already done):
+
+.. code-block:: bash
+
+    git clone https://github.com/BETIF-DIFAET/charts.git
+
+2. Deploy the CVMFS service:
+
+.. code-block:: bash
+
+    git clone -b release-2.0 https://github.com/BETIF-DIFAET/cvmfs-csi.git
+    helm install cvmfs ./cvmfs-csi/deployments/helm/cvmfs-csi -f ./charts/stable/cvmfs/config.yaml -n jhub
+    kubectl create -f ./charts/stable/cvmfs/volume-storageclass-pvc.yaml
+    kubectl create -f ./charts/stable/cvmfs/cvmfs-idler-daemonset.yaml
+
+^^^^^^^^^^^^^^^^^
+Customizing cvmfs
+^^^^^^^^^^^^^^^^^
+
+To customize the CVMFS configuration, you can modify the ``config.yaml`` file in the ``charts/stable/cvmfs/`` directory. This file contains various configuration options for CVMFS,
+
+^^^^^^^^^^^^^^^
+Uninstall CVMFS
+^^^^^^^^^^^^^^^
+
+.. WARNING::
+
+  Before uninstalling the Helm package, **delete first** the ``cvmfs-idler-daemonset`` resource to avoid corrupting the ``cvmfs-idler`` pods (causing them to go in Error state, for SIGKILL).
+
+To uninstall the CVMFS Helm package, run:
+
+.. code-block:: bash
+
+    kubectl delete daemonset cvmfs-idler-daemonset -n jhub
+    helm uninstall cvmfs -n jhub
+
+---------------------------------
+Adding GPU support to the cluster
+---------------------------------
+
+To add GPU support to the Kubernetes cluster, the steps above to set up the GPU worker node must be followed. Once the node is ready, the `NVIDIA GPU Operator`_ is used to manage the GPU resources in the cluster.
+The dedicated Helm chart installation is available in the `charts repository`_.
+
+.. _NVIDIA GPU Operator: https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/index.html
+.. _charts repository: https://github.com/BETIF-DIFAET/charts 
+
+The installation can be done by following these steps:
+
+1. Clone the charts repository (if not already done):
+
+.. code-block:: bash
+
+    git clone https://github.com/BETIF-DIFAET/charts.git
+
+2. Deploy the NVIDIA GPU operator:
+
+.. code-block:: bash
+
+    kubectl create namespace gpu-operator
+    kubectl create -f ./charts/stable/gpu-operator/time-slicing-config.yaml
+    kubectl create -f ./charts/stable/gpu-operator/gpu-operator.yaml
+
+The GPU operator will automatically detect the GPU on the worker node and manage its resources. The ``time-slicing-config.yaml`` file is used to configure the GPU time slicing feature, which allows multiple pods to share the same GPU.
+
+.. NOTE::
+
+  Currently, the GPU time slicing is set for **10 replicas**, which means that up to 10 pods can share the same GPU. This setting can be adjusted in the ``time-slicing-config.yaml`` file.
+
+
+    
+^^^^^^^^^^^^^^^^^^^^^^
+Uninstall GPU operator
+^^^^^^^^^^^^^^^^^^^^^^
+
+To uninstall the GPU operator Helm package, run:
+
+.. code-block:: bash
+
+  kubectl delete helmchart gpu-operator -n kube-system
+  helm delete namespace gpu-operator
+
+
 
 ----------
 References
