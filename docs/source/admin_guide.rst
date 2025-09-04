@@ -185,6 +185,83 @@ At this point, a VM with access to a GPU can be create with the following instru
     --noautoconsole \
     --hostdev <PCI-ID of device>
 
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Setting up the GPU Worker Node
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To make the GPU deployable in the k8s cluster, NVidia's drivers are needed in the worker node housing the virtual GPU.
+
+After an update of the kernel, some utilities are useful/needed to move forward
+
+.. code-block:: bash
+
+    dnf check-update --security
+    dnf upgrade --security
+    dnf install pciutils
+    dnf install epel-release
+    dnf install dkms gcc
+
+Then the Nvidia Toolkit and driver have to be installed, following the instruction from [GPU1]_:
+
+.. code-block:: bash
+
+    dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
+    dnf clean all
+    dnf install cuda-toolkit-12-4
+    dnf module install nvidia-driver:latest-dkms
+
+In order to actually add the nvidia driver to the kernel run ``dkms status`` and then
+
+.. code-block:: bash
+
+    dkms install nvidia/<version>
+    reboot
+
+
+Once the node is running after the reboot, it is possible to check if the driver is working by running ``nvidia-smi``
+
+.. IMPORTANT::
+  
+  It is possible that the open-source driver ``nouveau`` is used instead of the proprietary one from Nvidia, if that is the case it can be fixed with the following
+
+  .. code-block:: bash
+
+    sudo tee /etc/modprobe.d/blacklist-nouveau.conf <<EOF
+    blacklist nouveau
+    options nouveau modeset=0
+    EOF
+    dracut --force
+    reboot
+
+^^^^^^^^^^
+NFS server
+^^^^^^^^^^
+
+All pods spawned by JupyterHub will contain a ``persistent-storage`` folder hosted in a NFS server.
+
+The procedure for provisioning this storage starts from launching in a fresh VM
+
+.. code-block:: bash
+
+    dnf install nfs-utils
+    systemctl enable --now nfs-server
+
+Then the folder to export is created with ``sudo mkdir -p /srv/nfs/k8s`` and its owner and r/w permissions are changed to
+
+.. code-block:: bash
+
+    chown -R nobody:nobody /srv/nfs/k8s/
+    chmod -R 0777 /srv/nfs/k8s
+
+Finally, the rules of the export are set and the filesystem is made visible
+
+.. code-block:: bash
+
+    /srv/nfs/k8s *(rw,sync,no_subtree_check,no_root_squash)
+    exportfs -ra
+
+
 --------------------------------
 Turning the VMs in a K8s cluster
 --------------------------------
@@ -249,55 +326,6 @@ Using RKE2, the computing architecture shown in :numref:`betif-arch` was built:
    :alt: BETIF-DIFAET architecture
 
    Schematic of the BETIF-DIFAET architecture.
-
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Setting up the GPU Worker Node
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To make the GPU deployable in the k8s cluster, NVidia's drivers are needed in the worker node housing the virtual GPU.
-
-After an update of the kernel, some utilities are useful/needed to move forward
-
-.. code-block:: bash
-
-    dnf check-update --security
-    dnf upgrade --security
-    dnf install pciutils
-    dnf install epel-release
-    dnf install dkms gcc
-
-Then the Nvidia Toolkit and driver have to be installed, following the instruction from [GPU1]_:
-
-.. code-block:: bash
-
-    dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
-    dnf clean all
-    dnf install cuda-toolkit-12-4
-    dnf module install nvidia-driver:latest-dkms
-
-In order to actually add the nvidia driver to the kernel run ``dkms status`` and then
-
-.. code-block:: bash
-
-    dkms install nvidia/<version>
-    reboot
-
-
-Once the node is running after the reboot, it is possible to check if the driver is working by running ``nvidia-smi``
-
-.. IMPORTANT::
-  
-  It is possible that the open-source driver ``nouveau`` is used instead of the proprietary one from Nvidia, if that is the case it can be fixed with the following
-
-  .. code-block:: bash
-
-    sudo tee /etc/modprobe.d/blacklist-nouveau.conf <<EOF
-    blacklist nouveau
-    options nouveau modeset=0
-    EOF
-    dracut --force
-    reboot
-
 
 -----------------------------------
 Deploying the BETIF-DIFAET platform
