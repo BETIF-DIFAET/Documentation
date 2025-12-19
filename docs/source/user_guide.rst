@@ -77,6 +77,16 @@ The default base images visible on the ``Server Options`` page are:
 Create your own JupyterLab image
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. WARNING::
+
+   We are in the process of moving from having to create the entire JLab images to much smaller kernels containing only the libraries and tools one needs.
+
+   Due to some problem with the CVMFS repositories that would hold such kernels, it is still a working in process. However, if interested `here <https://github.com/BETIF-DIFAET/custom_kernels>`_ you can find some default images to use as templates for creating your own.
+
+   There will be a PR mechanism in that GitHub repository to allow the upload of user-created kernels to the facility.
+
+   Stay tuned!
+
 Here you will learn how to leverage your own image (libraries, code etc) to execute your JupyterLab notebooks.
 
 **Example: add the Keras python library**
