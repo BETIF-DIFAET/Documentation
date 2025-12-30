@@ -209,7 +209,7 @@ Then the Nvidia Toolkit and driver have to be installed, following the instructi
     dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
     dnf clean all
     dnf install cuda-toolkit-12-4
-    dnf module install nvidia-driver:latest-dkms
+    dnf module install nvidia-driver:580-dkms
 
 In order to actually add the nvidia driver to the kernel run ``dkms status`` and then
 
