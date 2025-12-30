@@ -7,6 +7,8 @@ How to access the prototype platform
 
 .. IMPORTANT::
    To connect via ssh to the BETIF-DIFAET machine, you need to stay within the **INFN Bologna network** (either physically or through a VPN connection).
+   
+   **Contact the BETIF-DIFAET administrators to obtain the cluster machine IP address.**
 
 In order to access the Jupyterhub instance now, an user would need to connect via ssh to the BETIF-DIFAET machine and bind a port through the ``-D``  flag:
 
@@ -53,16 +55,19 @@ JupyterLab image selection
 
 The default base images visible on the ``Server Options`` page are:
 
-+--------------------------------------+-----------------------------------------------------------+-------------------------------------------------------+
-|              Image name              |                       Image path                          |                 Packages installed                    |
-+======================================+===========================================================+=======================================================+
-|    Almalinux9 CPU-only base image    |    `ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v0.1.0`_    |              Python 3.11, VOMS client                 |
-+--------------------------------------+-----------------------------------------------------------+-------------------------------------------------------+
-|  Almalinux9 CPU-with-GPU base image  |    `ghcr.io/betif-difaet/jlab:betif-alma9-gpu-v0.1.0`_    | Python 3.11, VOMS client, NVIDIA drivers, CUDA 12.4   |
-+--------------------------------------+-----------------------------------------------------------+-------------------------------------------------------+
++--------------------------------------+---------------------------------------------------------------+-------------------------------------------------------+
+|              Image name              |                          Image path                           |                   Packages installed                  |
++======================================+===============================================================+=======================================================+
+|    Almalinux9 CPU-only base image    |      `ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v0.2.1`_      |                Python 3.11, VOMS client               |
++--------------------------------------+---------------------------------------------------------------+-------------------------------------------------------+
+|      Almalinux9 ROOT base image      | `ghcr.io/betif-difaet/jlab:betif-alma9-cpu-with-root-v0.2.1`_ |          Python 3.11, VOMS client, ROOT 6.34          |
++--------------------------------------+---------------------------------------------------------------+-------------------------------------------------------+
+|  Almalinux9 CPU-with-GPU base image  |      `ghcr.io/betif-difaet/jlab:betif-alma9-gpu-v0.2.1`_      | Python 3.11, VOMS client, NVIDIA drivers, CUDA 12.4   |
++--------------------------------------+---------------------------------------------------------------+-------------------------------------------------------+
 
-.. _ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v0.1.0: https://github.com/betif-difaet/custom_images/pkgs/container/jlab/506490177?tag=betif-alma9-cpu-v0.1.0
-.. _ghcr.io/betif-difaet/jlab:betif-alma9-gpu-v0.1.0: https://github.com/betif-difaet/custom_images/pkgs/container/jlab/506497746?tag=betif-alma9-gpu-v0.1.0
+.. _ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v0.2.1: https://github.com/betif-difaet/custom_images/pkgs/container/jlab/506490177?tag=betif-alma9-cpu-v0.2.1
+.. _ghcr.io/betif-difaet/jlab:betif-alma9-gpu-v0.2.1: https://github.com/betif-difaet/custom_images/pkgs/container/jlab/506497746?tag=betif-alma9-gpu-v0.2.1
+.. _ghcr.io/betif-difaet/jlab:betif-alma9-cpu-with-root-v0.2.1: https://github.com/betif-difaet/custom_images/pkgs/container/jlab/506490178?tag=betif-alma9-cpu-with-root-v0.2.1
 
 .. WARNING::
 
@@ -74,97 +79,136 @@ The default base images visible on the ``Server Options`` page are:
    Otherwise, the GPU resources will not be allocated to your notebook server and/or the NVIDIA drivers will not be available.
 
 
-Create your own JupyterLab image
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Choose your Jupyter kernel
+--------------------------
 
-.. WARNING::
+After selecting the desired image and clicking on the **Start** button, the JupyterLab environment will start.
 
-   We are in the process of moving from having to create the entire JLab images to much smaller kernels containing only the libraries and tools one needs.
+.. NOTE::
 
-   Due to some problem with the CVMFS repositories that would hold such kernels, it is still a working in process. However, if interested `here <https://github.com/BETIF-DIFAET/custom_kernels>`_ you can find some default images to use as templates for creating your own.
+   The first startup may take a few minutes, as the server needs to be created and the image pulled from the container registry.
 
-   There will be a PR mechanism in that GitHub repository to allow the upload of user-created kernels to the facility.
+Once the JupyterLab environment is running, you can create a new notebook by clicking on the **Python 3** notebook kernels, as shown in :numref:`jlab-kernel`.
 
-   Stay tuned!
+.. _jlab-kernel:
 
-Here you will learn how to leverage your own image (libraries, code etc) to execute your JupyterLab notebooks.
+.. figure:: kernel.png
+   :alt: Kernel
+
+   JupyterLab kernel selection.
+
+The available kernels shown in the home page are:
+
++---------------------------------+------------------+------------------------------------------------------------------------------------+
+|           Kernel name           |  Python version  |                                Additional packages                                 |
++=================================+==================+====================================================================================+
+|            `Python 3`           |     3.11.8       |                           None (local base environment)                            |
++---------------------------------+------------------+------------------------------------------------------------------------------------+
+| `Singularity kernel - Default`_ |     3.11.14      |  Base image for custom Singularity containers - nothing pre-installed (see below)  |
++---------------------------------+------------------+------------------------------------------------------------------------------------+
+|  `Singularity kernel - ROOT`_   |     3.11.14      | Base image for custom Singularity containers - ROOT 6.34 pre-installed (see below) |
++---------------------------------+------------------+------------------------------------------------------------------------------------+
+|  `Singularity kernel - WDF`_    |     3.11.14      |                 Kernel singularity: WDF and PyTSA (from A. Ghinassi)               |
++---------------------------------+------------------+------------------------------------------------------------------------------------+
+
+.. _`Singularity kernel - Default`: ghcr.io/betif-difaet/kernel-default:v1.2.0
+.. _`Singularity kernel - ROOT`: ghcr.io/betif-difaet/kernel-root:v1.2.0
+.. _`Singularity kernel - WDF`: ghcr.io/betif-difaet/kernel-wdf:v1.2.0
+
+The `Python 3` local kernel is lightweight and does not include any additional packages (to avoid overloading the JupyterLab environment).
+
+The `Singularity kernels` are designed to run **custom kernels** based on Singularity images. These images can be customized by the users to include
+specific libraries and tools required for their work. More details on how to create your own Singularity image are provided in the next section.
+
+They are **accessible via CVMFS** where they can be accessed by all the users of the platform.
+
+Create your own custom singularity kernel image
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here you will learn how to leverage your own kernel image (containing libraries, tools etc) to execute your Jupyter notebooks.
 
 **Example: add the Keras python library**
 
 - First, you have to create a file named Dockerfile, with the series of instructions required to install all the required packages.
 
 .. IMPORTANT::
-   The only requirement is that the image **has to be derived from one of the base images listed above**, to avoid compatibility issues.
+   The only requirement is that the custom kernel image **must be based** on the following base kernel image:
+
+   ``ghcr.io/betif-difaet/kernel-default:v1.2.0``: for a clean sheet kernel;
+
+   ``ghcr.io/betif-difaet/kernel-root:v1.2.0``: for a kernel with ROOT 6.34 pre-installed.
 
 As an example:
 
 .. code-block:: dockerfile
 
-   FROM ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v0.1.0
+   FROM ghcr.io/betif-difaet/kernel-default:v1.2.0
    RUN python3 -m pip install keras
 
 - To make the image visible on the platform, there are several options available:
 
-   1. **Build the image locally**: 
+   1. **Build the image locally and upload it to a container registry** 
       - Build the image with the command:
 
       .. code-block:: bash
      
-         $ docker build -t custom-jlab .
+         $ docker build -t custom-kernel .
 
       - Push it to a container registry (e.g., Docker Hub, GitHub Container Registry) that is accessible by the JupyterHub instance.
+
+      - Open a terminal on the Jupyterlab instance and download the image from the container registry:
+
+      .. code-block:: bash
+
+         $ singularity pull docker://<YOUR_CONTAINER_REGISTRY>/custom-kernel:latest
+
+      - Move the downloaded `.sif` image somewhere in the persistent storage (otherwise it will be lost when the server is stopped);
+      - Click on the `Kernelspec Manager` icon in the JupyterLab home page:
+
+      .. figure:: kernelspec.png
+         :alt: Kernelspec Manager
+
+         JupyterLab Kernelspec Manager icon.
+
+      - In the Kernelspec Manager page, click on the `Template` icon circled in red in :numref:`kernelspec-template` to create a new kernel template:
+
+      .. _kernelspec-template:
+
+      .. figure:: singularity_kernel.png
+         :alt: Kernelspec Template
+
+         Create a new Singularity kernel template.
+
+      - Insert the local absolute path to the Singularity image in the window that appears, and click on `Create Kernelspec`. The new kernel will now be available in the JupyterLab kernel selection page.
+
+
+   2. **Add the kernel in the BETIF-DIFAET custom kernel repository, to make it available to all users**
+
+      - Clone the BETIF-DIFAET `custom kernels repository`_:
+
+      .. _custom kernels repository: https://github.com/BETIF-DIFAET/custom_kernels
+
+      .. code-block:: bash
+
+         git clone https://github.com/BETIF-DIFAET/custom_kernels.git
+
+      - Add a new folder named ``<your_kernel_name>`` in the repository root, containing the Dockerfile created before;
+      - Create a ``README.md`` file in the same folder, describing the kernel purpose and the packages installed;
+      - Do a pull request to the repository. After the merge, the new kernel image will be automatically built and published to the GitHub Container Registry;
+      - After a few hours, the new kernel image will be available to all users in the following path:
+
+      .. code-block:: bash
+
+         /cvmfs/unpacked.cern.ch/ghcr.io/betif-difaet/kernel-<your_kernel_name>:latest
+
+      - Load the kernel in your JupyterLab environment, following the same steps described in the previous option (Kernelspec Manager -> Create new template etc).
+      Make sure to use the **full absolute CVMFS path** to the Singularity image.
+
+.. NOTE::
+
+   We are planning to move the custom kernels to the `unpacked` service of INFN: ``/cvmfs/unpacked.infn.it`` (already mounted in the JupyterLab environment).
    
-   2. **Use Github CI/CD to publish the image directly on GitHub**
-
-      - Create a public repository on GitHub;
-      - Add the Dockerfile to the repository;
-      - Create an additional file named ``publish.yaml`` in the ``.github/workflows`` directory with the following content:
-
-      .. code-block:: yaml
-
-         name: docker-publish
-         
-         on:
-            push:
-               branches: [ "main" ]
-               tags:
-               - "*"
-         jobs:
-            build-and-push-image:
-               runs-on: ubuntu-latest
-               steps:
-               - name: Checkout
-                 uses: actions/checkout@v2
-               - name: Set up QEMU
-                 uses: docker/setup-qemu-action@v1
-               - name: Set up Docker Buildx
-                 uses: docker/setup-buildx-action@v1
-               - name: Login to GitHub Container Registry
-                 uses: docker/login-action@v1
-                 with:
-                   registry: ghcr.io
-                   username: ${{ github.repository_owner }}
-                   password: ${{ secrets.GITHUB_TOKEN }}
-               - name: Get Repo Owner
-                 id: get_repo_owner
-                 run: echo ::set-output name=repo_owner::$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
-               - name: Build container image
-                 uses: docker/build-push-action@v2
-                 with:
-                   outputs: "type=registry,push=true"
-                   tags: |
-                     ghcr.io/${{ steps.get_repo_owner.outputs.repo_owner }}/custom-jlab:latest
-                   platforms: linux/amd64
-        
-      - After committing (and pushing) all these files to the repository, a workflow will be triggered (as shown with a yellow dot 
-        near your last commit in GitHub). Clicking on that dot will show you the execution log (in case of debugging).
-      - After a successful execution (green tick), your image will be visible on the right bar of the repository (under ``Packages``).
-      - If you click on the image name, you will find a link to the image (starting with ``ghcr.io/...``), that you can copy/paste in the 
-        platform ``Server Options`` page.
-
-
-      .. WARNING::
-         Make sure the repository has **read/write permissions** for actions. To can change that under Settings -> Actions -> Workflow permissions
+   This service, however, is still a work in progress from INFN Cloud: when it will be ready, we will migrate all the custom kernels there and we will notify all users.
 
 Available platform components usage
 -----------------------------------
