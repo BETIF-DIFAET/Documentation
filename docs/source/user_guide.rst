@@ -58,11 +58,11 @@ The default base images visible on the ``Server Options`` page are:
 +--------------------------------------+---------------------------------------------------------------+-------------------------------------------------------+
 |              Image name              |                          Image path                           |                   Packages installed                  |
 +======================================+===============================================================+=======================================================+
-|    Almalinux9 CPU-only base image    |      `ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v0.2.1`_      |                Python 3.11, VOMS client               |
+|    Almalinux9 CPU-only base image    |      `ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v0.3.0`_      |                Python 3.11, VOMS client               |
 +--------------------------------------+---------------------------------------------------------------+-------------------------------------------------------+
-|      Almalinux9 ROOT base image      | `ghcr.io/betif-difaet/jlab:betif-alma9-cpu-with-root-v0.2.1`_ |          Python 3.11, VOMS client, ROOT 6.34          |
+|      Almalinux9 ROOT base image      | `ghcr.io/betif-difaet/jlab:betif-alma9-cpu-with-root-v0.3.0`_ |          Python 3.11, VOMS client, ROOT 6.34          |
 +--------------------------------------+---------------------------------------------------------------+-------------------------------------------------------+
-|  Almalinux9 CPU-with-GPU base image  |      `ghcr.io/betif-difaet/jlab:betif-alma9-gpu-v0.2.1`_      | Python 3.11, VOMS client, NVIDIA drivers, CUDA 12.4   |
+|  Almalinux9 CPU-with-GPU base image  |      `ghcr.io/betif-difaet/jlab:betif-alma9-gpu-v0.3.0`_      | Python 3.11, VOMS client, NVIDIA drivers, CUDA 12.4   |
 +--------------------------------------+---------------------------------------------------------------+-------------------------------------------------------+
 
 .. _ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v0.2.1: https://github.com/betif-difaet/custom_images/pkgs/container/jlab/506490177?tag=betif-alma9-cpu-v0.2.1
