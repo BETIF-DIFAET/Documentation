@@ -261,6 +261,360 @@ Finally, the rules of the export are set and the filesystem is made visible
     /srv/nfs/k8s *(rw,sync,no_subtree_check,no_root_squash)
     exportfs -ra
 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+VM Configurations for FPGA Virtualization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Deployment parameters
+---------------------
+
+Replace the placeholders below with the values for the target deployment. Subnet placeholders include the CIDR prefix; gateway and host placeholders contain a single address.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 65
+
+   * - Item
+     - Value
+   * - Existing cluster hypervisor
+     - ``hyperA`` / ``<HYPER_A_LAN_IP>``
+   * - FPGA hypervisor
+     - ``hyperB`` / ``<HYPER_B_LAN_IP>``
+   * - Existing cluster VM network
+     - ``private-net`` / ``<CLUSTER_VM_SUBNET>`` / ``virbr1``
+   * - Existing cluster VM gateway
+     - ``<CLUSTER_VM_GATEWAY>``
+   * - Existing cluster netmask
+     - ``<CLUSTER_VM_NETMASK>``
+   * - Existing cluster DHCP range
+     - ``<CLUSTER_VM_DHCP_START>``--``<CLUSTER_VM_DHCP_END>``
+   * - FPGA worker VM network
+     - ``k8s-routed`` / ``<FPGA_WORKER_SUBNET>`` / ``virbr2``
+   * - FPGA worker VM gateway
+     - ``<FPGA_WORKER_GATEWAY>``
+   * - FPGA worker netmask
+     - ``<FPGA_WORKER_NETMASK>``
+   * - FPGA worker DHCP range
+     - ``<FPGA_WORKER_DHCP_START>``--``<FPGA_WORKER_DHCP_END>``
+   * - RKE2 endpoint
+     - ``<RKE2_SERVER_IP>:9345``
+   * - FPGA worker VM
+     - ``alma9-worker-fpga``
+   * - FPGA worker address
+     - ``<FPGA_WORKER_IP>``
+   * - Former libvirt NAT address
+     - ``<OLD_NAT_IP>``
+   * - External connectivity test
+     - ``<EXTERNAL_TEST_IP>``
+   * - HyperB uplink
+     - ``eno1``
+   * - HyperA uplink
+     - ``enp3s0f0``
+   * - FPGA Card functions on HyperB
+     - ``0000:01:00.0``, ``0000:01:00.1``
+   * - Guest OS
+     - AlmaLinux 9
+   * - Validated guest kernel
+     - ``5.14.0-427.13.1.el9_4.x86_64``
+   * - Validated XRT
+     - ``2.26.0``
+
+
+1. One-time routed network setup for adding external VM to the cluster
+----------------------------------------------------------------------
+
+
+1.1 HyperA: ``private-net``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``private-net`` must use routed mode. Its persistent definition is:
+
+.. code:: xml
+
+   <network>
+     <name>private-net</name>
+     <uuid>928084d2-145c-4d6b-a749-20f685df7bc5</uuid>
+     <forward mode='route'/>
+     <bridge name='virbr1' stp='on' delay='0'/>
+     <mac address='52:54:00:2c:f5:50'/>
+     <ip address='<CLUSTER_VM_GATEWAY>' netmask='<CLUSTER_VM_NETMASK>'>
+       <dhcp>
+         <range start='<CLUSTER_VM_DHCP_START>' end='<CLUSTER_VM_DHCP_END>'/>
+       </dhcp>
+     </ip>
+   </network>
+
+When rebuilding the network, stop the VMs attached to it, then redefine it:
+
+.. code:: bash
+
+   virsh net-destroy private-net
+   virsh net-define private-net-route.xml
+   virsh net-autostart private-net
+   virsh net-start private-net
+
+Add the route to the FPGA worker subnet:
+
+.. code:: bash
+
+   ip route add <FPGA_WORKER_SUBNET> via <HYPER_B_LAN_IP> dev enp3s0f0
+
+Restore outbound Internet access for the existing cluster VMs:
+
+.. code:: bash
+
+   iptables -t nat -A POSTROUTING \
+     -s <CLUSTER_VM_SUBNET> \
+     -o enp3s0f0 \
+     -j MASQUERADE
+
+
+1.2 HyperB: ``k8s-routed``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create ``k8s-routed.xml``:
+
+.. code:: xml
+
+   <network>
+     <name>k8s-routed</name>
+     <forward mode='route'/>
+     <bridge name='virbr2' stp='on' delay='0'/>
+     <ip address='<FPGA_WORKER_GATEWAY>' netmask='<FPGA_WORKER_NETMASK>'>
+       <dhcp>
+         <range start='<FPGA_WORKER_DHCP_START>' end='<FPGA_WORKER_DHCP_END>'/>
+       </dhcp>
+     </ip>
+   </network>
+
+Define and start it:
+
+.. code:: bash
+
+   virsh net-define k8s-routed.xml
+   virsh net-autostart k8s-routed
+   virsh net-start k8s-routed
+   virsh net-dumpxml k8s-routed
+
+Enable forwarding:
+
+.. code:: bash
+
+   sysctl -w net.ipv4.ip_forward=1
+
+Add the route to the existing cluster network:
+
+.. code:: bash
+
+   ip route add <CLUSTER_VM_SUBNET> via <HYPER_A_LAN_IP> dev eno1
+
+Persist it in the existing NetworkManager profile:
+
+.. code:: bash
+
+   nmcli connection modify "System eth0" \
+     +ipv4.routes "<CLUSTER_VM_SUBNET> <HYPER_A_LAN_IP>"
+
+   nmcli device reapply eno1
+
+Restore outbound Internet access for VMb and save the active rules:
+
+.. code:: bash
+
+   iptables -t nat -A POSTROUTING \
+     -s <FPGA_WORKER_SUBNET> \
+     -o eno1 \
+     -j MASQUERADE
+
+   iptables-save > /etc/sysconfig/iptables
+
+Check the final state:
+
+.. code:: bash
+
+   ip route get <RKE2_SERVER_IP>
+   sysctl net.ipv4.ip_forward
+   iptables -t nat -S POSTROUTING
+
+Expected route:
+
+.. code:: text
+
+   <RKE2_SERVER_IP> via <HYPER_A_LAN_IP> dev eno1
+
+
+2. Configure the FPGA worker VM
+-------------------------------
+
+The VM must have only the routed cluster NIC. Do not keep an interface connected to libvirt's ``default`` network; that caused RKE2 and Flannel to advertise ``<OLD_NAT_IP>``.
+
+Edit the VM if already created:
+
+.. code:: bash
+
+   virsh shutdown alma9-worker-fpga
+   virsh edit alma9-worker-fpga
+
+The remaining interface must use ``k8s-routed``:
+
+.. code:: xml
+
+   <interface type='network'>
+     <source network='k8s-routed'/>
+     <model type='virtio'/>
+   </interface>
+
+Remove any interface containing:
+
+.. code:: xml
+
+   <source network='default'/>
+
+The VM definition must also contain both FPGA Card PCI functions, ``0000:01:00.0`` and ``0000:01:00.1``. The existing VM creation/helper scripts on HyperB are used to add them.
+
+
+3. Prepare the FPGA on HyperB and start the VM
+----------------------------------------------
+
+Confirm the host PCI addresses:
+
+.. code:: bash
+
+   lspci -Dnnk -d 10ee:
+
+Load the validated base platform when required:
+
+.. code:: bash
+
+   source /opt/xilinx/xrt/setup.sh
+   xbmgmt program --base -d 0000:01:00
+
+Bind both functions to ``vfio-pci`` before starting the VM:
+
+.. code:: bash
+
+   modprobe vfio
+   modprobe vfio_pci
+
+   echo 0000:01:00.0 > /sys/bus/pci/drivers/xclmgmt/unbind
+   echo 0000:01:00.1 > /sys/bus/pci/drivers/xocl/unbind
+
+   echo vfio-pci > /sys/bus/pci/devices/0000:01:00.0/driver_override
+   echo vfio-pci > /sys/bus/pci/devices/0000:01:00.1/driver_override
+
+   echo 0000:01:00.0 > /sys/bus/pci/drivers_probe
+   echo 0000:01:00.1 > /sys/bus/pci/drivers_probe
+
+   lspci -k -s 01:00.0
+   lspci -k -s 01:00.1
+
+Both functions must show ``vfio-pci`` before starting the VM.
+
+
+Inside VMb, the final network state is:
+
+.. code:: bash
+
+   ip addr
+   ip route
+
+Expected route:
+
+.. code:: text
+
+   default via <FPGA_WORKER_GATEWAY> dev eth0
+   <FPGA_WORKER_SUBNET> dev eth0
+
+
+4. Install XRT and the FPGA platform packages in VMb
+-------------------------------------------
+
+4.2 XRT 2.26.0
+~~~~~~~~~~~~~~
+
+Install the known-good RPM when it is already available:
+
+.. code:: bash
+
+   dnf install xrt_202620.2.26.0_9.8-x86_64-xrt.rpm
+
+If the RPM must be rebuilt, the successful build path was:
+
+.. code:: bash
+
+   dnf install git
+   git clone https://github.com/DrWatt/XRT.git
+
+   source XRT/src/runtime_src/tools/scripts/xrtdeps.sh
+   export PATH=$PATH:/usr/local/bin
+
+   mkdir -p /home/clouduser/firmware/xilinx
+   mv sched*.bin /home/clouduser/firmware/xilinx/
+
+   cd XRT/build
+   ./build.sh -ertfw /home/clouduser/firmware/xilinx/ -noert
+   cd Release
+   dnf install xrt_202620.2.26.0_9.8-x86_64-xrt.rpm
+
+The DKMS source required the local ``qdma_mbox.c`` compatibility edit:
+
+.. code:: bash
+
+   vi /usr/src/xrt-2.26.0/driver/xocl/lib/libqdma/QDMA/linux-kernel/driver/libqdma/qdma_mbox.c
+
+The timer callback uses:
+
+.. code:: c
+
+   container_of(t, struct qdma_mbox, timer);
+
+Rebuild the module:
+
+.. code:: bash
+
+   dkms remove xrt/2.26.0 --all
+   dkms add -m xrt -v 2.26.0
+   dkms build -m xrt -v 2.26.0 -k "$(uname -r)"
+   dkms install -m xrt -v 2.26.0 -k "$(uname -r)"
+
+
+4.3 FPGA platform packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install EPEL and use the existing ``/etc/yum.repos.d/xlnx.repo`` used on this host:
+
+.. code:: bash
+
+   yum install -y \
+     https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+
+   dnf makecache
+
+Install the validated package set (here u55c as an example):
+
+.. code:: bash
+
+   dnf install \
+     xilinx-u55c-gen3x16-xdma-base-3-3494559.noarch \
+     xilinx-u55c-gen3x16-xdma-validate-3-3506150.noarch \
+     xilinx-sc-fw-u55-7.1.22-1.b8c3d15.noarch \
+     xilinx-cmc-u55-1.5.25-3395704.noarch
+
+Validate the guest installation. The guest BDF may change, so discover it first:
+
+.. code:: bash
+
+   lspci -nnk | grep -i -A4 -B1 -E 'Xilinx|AMD'
+   source /opt/xilinx/xrt/setup.sh
+   xrt-smi examine
+   xrt-smi validate -d <guest-user-PF>
+
+If the firmware files are present but reported as unreadable:
+
+.. code:: bash
+
+   chmod -R a+r /lib/firmware/xilinx
+   restorecon -Rv /lib/firmware/xilinx
+
 
 --------------------------------
 Turning the VMs in a K8s cluster
@@ -516,7 +870,136 @@ To uninstall the GPU operator Helm package, run:
   kubectl delete helmchart gpu-operator -n kube-system
   helm delete namespace gpu-operator
 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Adding VM from different Hypervisor to the cluster
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1. Join VM to RKE2
+-------------------
+
+Use the existing site helper script:
+
+.. code:: bash
+
+   cd /home/clouduser/helper-scripts/rke2
+   ./install_worker_fpga.sh
+
+The final RKE2 configuration on VMb must contain the routed node address:
+
+.. code:: yaml
+
+   server: https://<RKE2_SERVER_IP>:9345
+   node-ip: <FPGA_WORKER_IP>
+
+Restart and inspect the agent:
+
+Basic connectivity checks from VMb:
+
+.. code:: bash
+
+   ping -c 3 <RKE2_SERVER_IP>
+   nc -vz <RKE2_SERVER_IP> 9345
+   curl -vk https://<RKE2_SERVER_IP>:9345/ping
+   ping -c 3 <EXTERNAL_TEST_IP>
+
+
+2. Check the node and Flannel address
+-------------------------------------
+
+From a control-plane node:
+
+.. code:: bash
+
+   kubectl get nodes -o wide
+   kubectl get node <fpga-node> -o yaml | \
+     grep -E 'flannel.alpha.coreos.com/public-ip|InternalIP' -A2
+
+Both addresses must be ``<FPGA_WORKER_IP>``.
+
+If Flannel retains the old NAT address, apply the override and restart only the Canal pod on VMb:
+
+.. code:: bash
+
+   kubectl annotate node <fpga-node> \
+     flannel.alpha.coreos.com/public-ip-overwrite=<FPGA_WORKER_IP> \
+     --overwrite
+
+   kubectl -n kube-system get pods -o wide | grep canal
+   kubectl -n kube-system delete pod <canal-pod-on-vmb>
+
+Verify VXLAN traffic on VMb:
+
+.. code:: bash
+
+   tcpdump -ni any udp port 8472
+
+The outer source for traffic from VMb must be ``<FPGA_WORKER_IP>``, not ``<OLD_NAT_IP>``.
+
+
+3. FPGA Operator checks
+-----------------------
+
+The Xilinx FPGA Operator release and values are maintained separately. After the worker joins, check that its components run on the FPGA worker:
+
+.. code:: bash
+
+   kubectl -n xilinx-system get pods -o wide
+   kubectl get node <fpga-node> --show-labels
+   kubectl describe node <fpga-node>
+
+The node must expose an ``amd.com/...`` FPGA resource before scheduling an FPGA workload.
+
+For NFD, JupyterHub or other pods timing out across nodes, test the remote pod IP directly and capture VXLAN on VMb:
+
+.. code:: bash
+
+   nc -vz <remote-pod-ip> <port>
+   tcpdump -ni any udp port 8472
+
+
+4. Checks after a Hypervisor reboot
+-----------------------------------
+
+HyperB:
+
+.. code:: bash
+
+   virsh net-list --all
+   ip route get <RKE2_SERVER_IP>
+   sysctl net.ipv4.ip_forward
+   iptables -t nat -S POSTROUTING
+
+Required state:
+
+.. code:: text
+
+   k8s-routed active
+   <RKE2_SERVER_IP> via <HYPER_A_LAN_IP> dev eno1
+   net.ipv4.ip_forward = 1
+   MASQUERADE rule for <FPGA_WORKER_SUBNET> on eno1
+
+5. FPGA Checks after a Hypervisor reboot
+----------------------------------------
+
+If the VM is not running, bind the two FPGA functions to ``vfio-pci`` as in section 3 and start it.
+
+VMb:
+
+.. code:: bash
+
+   ip route
+   ping -c 3 <RKE2_SERVER_IP>
+   ping -c 3 <EXTERNAL_TEST_IP>
+   systemctl status rke2-agent --no-pager
+   source /opt/xilinx/xrt/setup.sh
+   xrt-smi examine
+
+Control plane:
+
+.. code:: bash
+
+   kubectl get nodes -o wide
+   kubectl -n xilinx-system get pods -o wide
 
 ----------
 References
