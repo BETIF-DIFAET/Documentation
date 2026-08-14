@@ -237,27 +237,24 @@ Rucio enables centralized management of large volumes of data backed by many het
 The Rucio lab extension provides a user-friendly interface to interact with Rucio, allowing users to manage datasets, files, 
 and storage elements directly from JupyterLab.
 
-To use the Rucio lab extension, you need to have a **valid Rucio account** and the necessary permissions to access the data.
+The default Rucio deployment configured in the BETIF-DIFAET platform is the ``Rucio ET`` instance, specific for the Einstein 
+Telescope Virtual Organization (VO). 
 
-.. IMPORTANT::
+.. NOTE::
 
-   For the authentication, you can use VOMS proxies. To create a proxy, you can use the following command:
+   To use Rucio (and the corresponding lab extension), you need to have a **valid Rucio account** 
+   and the necessary permissions to access the data.
 
-   .. code-block:: bash
-
-      $ voms-proxy-init --voms <VO_NAME> -old --key .globus/userkey.pem --cert .globus/usercert.pem
-   
-   Replace `<VO_NAME>` with the name of your Virtual Organization (e.g., ``escape``). The ``.globus/userkey.pem`` and 
-   ``.globus/usercert.pem`` files are the private key and certificate files, respectively, that you can obtain from your GRID 
-   credentials.
+The default authentication method for Rucio is **OpenID Connect (OIDC)**, which allows users to authenticate using the same Einstein 
+Telescope IAM credentials already used to access the JupyterLab environment.
 
 To use the Rucio lab extension, follow these steps:
 
 1. **Open the Rucio lab extension**: Click on the Rucio icon in the JupyterLab sidebar;
 
-2. **Authenticate**: Go to the **Settings** icon, as shown in :numref:`rucio-settings`. Under ``Proxy file path``, enter the path
-to your VOMS proxy file (normally in ``/tmp/x509up_u0``). Under ``account`` enter your Rucio account name. Click on ``Save Settings``
-to confirm.
+2. **Authenticate**: Go to the **Settings** icon, as shown in :numref:`rucio-settings`. Simply click on the ``Validate`` button to 
+authenticate with your IAM credentials. The Rucio lab extension will automatically retrieve the necessary token and configure the 
+connection to the Rucio ET instance.
 
 .. _rucio-settings:
 
@@ -270,11 +267,32 @@ to confirm.
 3. **Browse datasets**: Use the Rucio lab extension to browse datasets, containers, and files. You can also include datasets in your 
    JupyterLab notebooks by clicking on the dataset and selecting the option to include it in your notebook.
 
+Other Rucio instances (e.g., the one used by the ESCAPE VO) can also be selected, but they might require different authentication methods.
+
+For example, you may want to configure the Rucio lab extension using your VOMS proxy file and Rucio account name. To do so, in the Rucio 
+lab extension settings, select **X509 Proxy certificate** as the authentication method. Then, under ``Proxy file path``, enter the path to 
+your VOMS proxy file (typically ``/tmp/x509up_u0``), and under ``account`` enter your Rucio account name. 
+Finally, click ``Save Settings`` to save the configuration and authenticate.
+
+.. IMPORTANT::
+
+   To create a proxy, you can use the following command:
+
+   .. code-block:: bash
+
+      $ voms-proxy-init --voms <VO_NAME> -old --key .globus/userkey.pem --cert .globus/usercert.pem
+   
+   Replace `<VO_NAME>` with the name of your Virtual Organization (e.g., ``escape``). The ``.globus/userkey.pem`` and 
+   ``.globus/usercert.pem`` files are the private key and certificate files, respectively, that you can obtain from your GRID 
+   credentials.
+
 .. NOTE::
 
    While not strictly necessary, Rucio is also available as a **command line interface (CLI)** tool. This is independent of the lab extension
-   and can be used to interact with Rucio from the terminal. To use the CLI, you need to create a configuration file named ``rucio.cfg``, with
-   the following content:
+   and can be used to interact with Rucio from the terminal. By default, the ET Rucio instance is already configured in the JupyterLab environment,
+   and you can use the CLI without any additional configuration (e.g. ``rucio whoami``).
+   
+   In case you want to use a *different* Rucio instance, you need to create a configuration file named ``rucio.cfg``. As an example:
 
    .. code-block:: ini
 
