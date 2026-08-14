@@ -58,16 +58,19 @@ The default base images visible on the ``Server Options`` page are:
 +--------------------------------------+---------------------------------------------------------------+-------------------------------------------------------+
 |              Image name              |                          Image path                           |                   Packages installed                  |
 +======================================+===============================================================+=======================================================+
-|    Almalinux9 CPU-only base image    |      `ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v0.3.0`_      |                Python 3.11, VOMS client               |
+|    Almalinux9 CPU-only base image    |      `ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v1.0.5`_      |                Python 3.11, VOMS client               |
 +--------------------------------------+---------------------------------------------------------------+-------------------------------------------------------+
-|      Almalinux9 ROOT base image      | `ghcr.io/betif-difaet/jlab:betif-alma9-cpu-with-root-v0.3.0`_ |          Python 3.11, VOMS client, ROOT 6.34          |
+|      Almalinux9 ROOT base image      | `ghcr.io/betif-difaet/jlab:betif-alma9-cpu-with-root-v1.0.5`_ |          Python 3.11, VOMS client, ROOT 6.34          |
 +--------------------------------------+---------------------------------------------------------------+-------------------------------------------------------+
-|  Almalinux9 CPU-with-GPU base image  |      `ghcr.io/betif-difaet/jlab:betif-alma9-gpu-v0.3.0`_      | Python 3.11, VOMS client, NVIDIA drivers, CUDA 12.4   |
+|  Almalinux9 CPU-with-GPU base image  |      `ghcr.io/betif-difaet/jlab:betif-alma9-gpu-v1.0.5`_      | Python 3.11, VOMS client, NVIDIA drivers, CUDA 12.4   |
++--------------------------------------+---------------------------------------------------------------+-------------------------------------------------------+
+|      Almalinux9 FPGA base image      |     `ghcr.io/betif-difaet/jlab:betif-alma9-fpga-v1.0.3`_      |         Python 3.11, VOMS client, FPGA drivers        |
 +--------------------------------------+---------------------------------------------------------------+-------------------------------------------------------+
 
-.. _ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v0.2.1: https://github.com/betif-difaet/custom_images/pkgs/container/jlab/506490177?tag=betif-alma9-cpu-v0.2.1
-.. _ghcr.io/betif-difaet/jlab:betif-alma9-gpu-v0.2.1: https://github.com/betif-difaet/custom_images/pkgs/container/jlab/506497746?tag=betif-alma9-gpu-v0.2.1
-.. _ghcr.io/betif-difaet/jlab:betif-alma9-cpu-with-root-v0.2.1: https://github.com/betif-difaet/custom_images/pkgs/container/jlab/506490178?tag=betif-alma9-cpu-with-root-v0.2.1
+.. _ghcr.io/betif-difaet/jlab:betif-alma9-cpu-v1.0.5: https://github.com/BETIF-DIFAET/custom_images/pkgs/container/jlab/1133089955?tag=betif-alma9-cpu-v1.0.5
+.. _ghcr.io/betif-difaet/jlab:betif-alma9-gpu-v1.0.5: https://github.com/BETIF-DIFAET/custom_images/pkgs/container/jlab/1133174633?tag=betif-alma9-gpu-v1.0.5
+.. _ghcr.io/betif-difaet/jlab:betif-alma9-cpu-with-root-v1.0.5: https://github.com/BETIF-DIFAET/custom_images/pkgs/container/jlab/1133132286?tag=betif-alma9-cpu-with-root-v1.0.5
+.. _ghcr.io/betif-difaet/jlab:betif-alma9-fpga-v1.0.3: https://github.com/BETIF-DIFAET/custom_images/pkgs/container/jlab/1036093468?tag=betif-alma9-fpga-v1.0.3
 
 .. WARNING::
 
@@ -77,6 +80,11 @@ The default base images visible on the ``Server Options`` page are:
 
    On the other hand, if **you need GPU capabilities**, make sure to select **Yes** in the JupyterHub spawn form, as shown in :numref:`jlab-spawn`, and select the CPU-with-GPU image. 
    Otherwise, the GPU resources will not be allocated to your notebook server and/or the NVIDIA drivers will not be available.
+
+.. DANGER::
+
+   The FPGA image is still **under development** and it is not yet fully functional. It is provided for testing purposes only. 
+   For the moment, it only comprises the FPGA drivers for the AMD Alveo U55C card.
 
 
 Choose your Jupyter kernel
@@ -110,10 +118,13 @@ The available kernels shown in the home page are:
 +---------------------------------+------------------+------------------------------------------------------------------------------------+
 |  `Singularity kernel - WDF`_    |     3.11.14      |                 Kernel singularity: WDF and PyTSA (from A. Ghinassi)               |
 +---------------------------------+------------------+------------------------------------------------------------------------------------+
+|  `Singularity kernel - IGWN`_   |     3.11.14      |                  Kernel singularity: IGWN tools (from A. Ghinassi)                 |
++---------------------------------+------------------+------------------------------------------------------------------------------------+
 
-.. _`Singularity kernel - Default`: ghcr.io/betif-difaet/kernel-default:v1.2.0
-.. _`Singularity kernel - ROOT`: ghcr.io/betif-difaet/kernel-root:v1.2.0
-.. _`Singularity kernel - WDF`: ghcr.io/betif-difaet/kernel-wdf:v1.2.0
+.. _`Singularity kernel - Default`: https://github.com/BETIF-DIFAET/custom_kernels/pkgs/container/kernel-default
+.. _`Singularity kernel - ROOT`: https://github.com/BETIF-DIFAET/custom_kernels/pkgs/container/kernel-root
+.. _`Singularity kernel - WDF`: https://github.com/BETIF-DIFAET/custom_kernels/pkgs/container/kernel-wdf
+.. _`Singularity kernel - IGWN`: https://github.com/BETIF-DIFAET/custom_kernels/pkgs/container/kernel-igwn
 
 The `Python 3` local kernel is lightweight and does not include any additional packages (to avoid overloading the JupyterLab environment).
 
