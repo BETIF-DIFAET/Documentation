@@ -206,17 +206,33 @@ Then the Nvidia Toolkit and driver have to be installed, following the instructi
 
 .. code-block:: bash
 
-    dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
+    dnf install almalinux-release-nvidia-driver
+    dnf install nvidia-open-kmod nvidia-driver nvidia-driver-cuda cuda-12-9 
     dnf clean all
-    dnf install cuda-toolkit-12-4
-    dnf module install nvidia-driver:580-dkms
-
-In order to actually add the nvidia driver to the kernel run ``dkms status`` and then
-
-.. code-block:: bash
-
-    dkms install nvidia/<version>
     reboot
+
+
+.. IMPORTANT::
+
+    THIS INSTRUCTIONS ARE NOT UP TO DATE, IGNORE
+
+    Then the Nvidia Toolkit and driver have to be installed, following the instruction from [GPU1OLD]_:
+
+    .. code-block:: bash
+
+        dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
+        dnf clean all
+        dnf install cuda-toolkit-12-4
+        dnf module install nvidia-driver:580-dkms
+
+    In order to actually add the nvidia driver to the kernel run ``dkms status`` and then
+
+    .. code-block:: bash
+
+        dkms install nvidia/<version>
+        reboot
+
+
 
 
 Once the node is running after the reboot, it is possible to check if the driver is working by running ``nvidia-smi``
@@ -1007,7 +1023,8 @@ References
 
 .. [RKE2] https://docs.rke2.io/
 .. [HELM] https://helm.sh/
-.. [GPU1] https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&Distribution=RHEL&target_version=9&target_type=rpm_network
+.. [GPU1] https://almalinux.org/blog/2025-08-06-announcing-native-nvidia-suport/
+.. [GPU1OLD] https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&Distribution=RHEL&target_version=9&target_type=rpm_network
 .. [GPU2] https://docs.rke2.io/advanced
 
 
