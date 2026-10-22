@@ -736,8 +736,8 @@ The steps to deploy the platform are as follows:
 
   .. code-block:: bash
 
-    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml
-    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.crds.yaml
+    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.20.4/cert-manager.yaml
+    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.20.4/cert-manager.crds.yaml
 
 * Label nodes with no GPU, to perform node selection during the deployment of the JupyterHub platform:
 
@@ -815,7 +815,7 @@ The installation can be done by following these steps:
 
 .. code-block:: bash
 
-    git clone -b release-2.0 https://github.com/BETIF-DIFAET/cvmfs-csi.git
+    git clone -b release-2.5 https://github.com/BETIF-DIFAET/cvmfs-csi.git
     helm install cvmfs ./cvmfs-csi/deployments/helm/cvmfs-csi -f ./charts/stable/cvmfs/config.yaml -n jhub
     kubectl create -f ./charts/stable/cvmfs/volume-storageclass-pvc.yaml
     kubectl create -f ./charts/stable/cvmfs/cvmfs-idler-daemonset.yaml
